@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Orders & Fulfillment | Bunai{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h2 mb-1 fw-bold text-dark">Artisan Orders & Fulfillment</h1>
+    <p class="text-muted mb-0">Track order statuses, customer invoices, payments, and dispatch timelines.</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'export_orders_csv' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-file-earmark-arrow-down"></i> Export CSV
+    </a>
+    <a href="{% url 'order_create' %}" class="btn btn-bunai-primary">
+      <i class="bi bi-plus-lg"></i> Create Order
+    </a>
+  </div>
+</div>
+
+<!-- Filters & Search Toolbar -->
+<div class="bunai-card mb-4">
+  <div class="bunai-card-body p-3">
+    <form method="GET" class="row g-2 align-items-center">
+      <div class="col-lg-4 col-md-6">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+          <input type="text" name="q" value="{{ q }}" class="form-control border-start-0 ps-0" placeholder="Search by Order #, customer name, phone...">
+        </div>
+      </div>
+
+      <div class="col-lg-2 col-md-3">
+        <select name="status" class="form-select">
+          <option value="">All Statuses</option>
+          {% for code, label in status_choices %}
+            <option value="{{ code }}" {% if selected_status == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-3">
+        <select name="payment_status" class="form-select">
+          <option value="">All Payments</option>
+          {% for code, label in payment_status_choices %}
+            <option value="{{ code }}" {% if selected_payment_status == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-4">
+        <select name="date_filter" class="form-select">
+          <option value="">All Time</option>
+          <option value="today" {% if selected_date_filter == 'today' %}selected{% endif %}>Today</option>
+          <option value="this_week" {% if selected_date_filter == 'this_week' %}selected{% endif %}>Last 7 Days</option>
+          <option value="this_month" {% if selected_date_filter == 'this_month' %}selected{% endif %}>This Month</option>
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-4 d-flex gap-1">
+        <button type="submit" class="btn btn-bunai-primary w-100"><i class="bi bi-funnel"></i> Filter</button>
+        {% if q or selected_status or selected_payment_status or selected_date_filter %}
+          <a href="{% url 'order_list' %}" class="btn btn-outline-secondary" title="Clear"><i class="bi bi-x-lg"></i></a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Orders Table -->
+<div class="bunai-card">
+  <div class="table-responsive">
+    <table class="table table-bunai align-middle">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Date</th>
+          <th>Customer</th>
+          <th>Items Summary</th>
+          <th>Grand Total</th>
+          <th>Payment</th>
+          <th>Fulfillment Status</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in page_obj %}
+        <tr>
+          <td>
+            <a href="{% url 'order_detail' order.pk %}" class="fw-bold text-dark text-decoration-none font-monospace">
+              #{{ order.order_number }}
+            </a>
+          </td>
+          <td class="text-muted small">
+            {{ order.order_date|date:"d M, Y" }}
+            <div class="text-muted" style="font-size: 0.75rem;">{{ order.order_date|date:"H:i" }}</div>
+          </td>
+          <td>
+            <a href="{% url 'customer_detail' order.customer.pk %}" class="fw-semibold text-dark text-decoration-none d-block">
+              {{ order.customer.name }}
+            </a>
+            <small class="text-muted">{{ order.customer.phone|default:"" }}</small>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border">
+              {{ order.total_items_quantity }} unit{% if order.total_items_quantity != 1 %}s{% endif %} ({{ order.items.count }} item{% if order.items.count != 1 %}s{% endif %})
+            </span>
+          </td>
+          <td class="fw-bold text-dark fs-6">
+            ₹{{ order.grand_total|floatformat:2|intcomma }}
+          </td>
+          <td>
+            <span class="badge bg-{{ order.payment_badge_class }}-subtle text-{{ order.payment_badge_class }} border border-{{ order.payment_badge_class }}-subtle">
+              {{ order.get_payment_status_display }}
+            </span>
+            <div class="small text-muted mt-1">{{ order.get_payment_method_display }}</div>
+          </td>
+          <td>
+            <span class="badge badge-bunai badge-{{ order.status|lower }}">
+              {{ order.get_status_display }}
+            </span>
+          </td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-secondary" title="View Order">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'order_invoice' order.pk %}" class="btn btn-outline-secondary" title="Print Invoice" target="_blank">
+                <i class="bi bi-printer"></i>
+              </a>
+              <a href="{% url 'order_update' order.pk %}" class="btn btn-outline-secondary" title="Edit Order">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'order_delete' order.pk %}" class="btn btn-outline-danger" title="Delete Order">
+                <i class="bi bi-trash"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="8" class="text-center py-5 text-muted">
+            <i class="bi bi-receipt fs-1 d-block mb-3"></i>
+            <h5>No orders found</h5>
+            <p>Create a new order to record sales and update inventory automatically.</p>
+            <a href="{% url 'order_create' %}" class="btn btn-bunai-primary">
+              <i class="bi bi-plus-lg"></i> Create New Order
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if page_obj.has_other_pages %}
+  <div class="bunai-card-body border-top py-3 d-flex justify-content-between align-items-center">
+    <div class="small text-muted">
+      Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ total_count }} orders
+    </div>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_payment_status %}&payment_status={{ selected_payment_status }}{% endif %}{% if selected_date_filter %}&date_filter={{ selected_date_filter }}{% endif %}">&laquo;</a></li>
+        {% endif %}
+        {% for num in page_obj.paginator.page_range %}
+          <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+            <a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_payment_status %}&payment_status={{ selected_payment_status }}{% endif %}{% if selected_date_filter %}&date_filter={{ selected_date_filter }}{% endif %}">{{ num }}</a>
+          </li>
+        {% endfor %}
+        {% if page_obj.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_payment_status %}&payment_status={{ selected_payment_status }}{% endif %}{% if selected_date_filter %}&date_filter={{ selected_date_filter }}{% endif %}">&raquo;</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

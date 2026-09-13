@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} | Bunai{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'customer_list' %}" class="text-decoration-none">Customers</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="bunai-card">
+      <div class="bunai-card-header">
+        <h1 class="h4 mb-0 fw-bold text-dark">{{ title }}</h1>
+        <a href="{% url 'customer_list' %}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Back
+        </a>
+      </div>
+      <div class="bunai-card-body p-4">
+        <form method="POST" novalidate>
+          {% csrf_token %}
+
+          {% if form.errors %}
+          <div class="alert alert-danger shadow-sm border-0 mb-4">
+            <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> Please correct the errors:</h6>
+            <ul class="mb-0 ps-3">
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <div class="row g-3 mb-3">
+            <div class="col-12">
+              <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">Customer / Business Name <span class="text-danger">*</span></label>
+              {{ form.name }}
+            </div>
+
+            <div class="col-md-6">
+              <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">Email Address</label>
+              {{ form.email }}
+            </div>
+
+            <div class="col-md-6">
+              <label for="{{ form.phone.id_for_label }}" class="form-label fw-semibold">Phone Number</label>
+              {{ form.phone }}
+            </div>
+
+            <div class="col-12">
+              <label for="{{ form.address.id_for_label }}" class="form-label fw-semibold">Street / Delivery Address</label>
+              {{ form.address }}
+            </div>
+
+            <div class="col-md-5">
+              <label for="{{ form.city.id_for_label }}" class="form-label fw-semibold">City</label>
+              {{ form.city }}
+            </div>
+
+            <div class="col-md-4">
+              <label for="{{ form.state.id_for_label }}" class="form-label fw-semibold">State / Province</label>
+              {{ form.state }}
+            </div>
+
+            <div class="col-md-3">
+              <label for="{{ form.postal_code.id_for_label }}" class="form-label fw-semibold">Postal / PIN Code</label>
+              {{ form.postal_code }}
+            </div>
+
+            <div class="col-12">
+              <label for="{{ form.notes.id_for_label }}" class="form-label fw-semibold">Internal Notes / Preferences</label>
+              {{ form.notes }}
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
+            <a href="{% url 'customer_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-bunai-primary px-4">
+              <i class="bi bi-check2-circle"></i> Save Customer Profile
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

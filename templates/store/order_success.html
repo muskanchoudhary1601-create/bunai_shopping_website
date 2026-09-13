@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Order Confirmed #{{ order.order_number }} | Bunai{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <!-- Success Header Card -->
+      <div class="bg-white rounded-4 border p-4 p-md-5 text-center shadow-sm mb-4">
+        <div class="rounded-circle bg-success-subtle text-success d-inline-flex align-items-center justify-content-center mb-3" style="width: 72px; height: 72px;">
+          <i class="bi bi-check-lg display-5"></i>
+        </div>
+        <h1 class="h2 fw-bold text-dark serif-font mb-2">Thank You, {{ order.customer.name }}!</h1>
+        <p class="text-muted fs-6 mb-3">Your order has been placed and dispatched to our master artisan studios.</p>
+        <div class="p-2 px-3 bg-light rounded-pill border d-inline-block font-monospace fw-bold text-dark mb-4">
+          Order Tracking ID: #{{ order.order_number }}
+        </div>
+
+        <!-- Live Status Timeline -->
+        <div class="timeline-stepper text-start mt-4 px-2">
+          <div class="timeline-step {% if order.status != 'CANCELLED' %}completed{% endif %}">
+            <div class="timeline-circle"><i class="bi bi-check-lg"></i></div>
+            <div class="timeline-title">Order Placed</div>
+            <small class="text-muted d-none d-sm-block">{{ order.order_date|date:"d M" }}</small>
+          </div>
+          <div class="timeline-step {% if order.status in 'PROCESSING,SHIPPED,DELIVERED' %}completed{% elif order.status == 'PENDING' %}active{% endif %}">
+            <div class="timeline-circle"><i class="bi bi-scissors"></i></div>
+            <div class="timeline-title">In Crafting</div>
+            <small class="text-muted d-none d-sm-block">Artisan Studio</small>
+          </div>
+          <div class="timeline-step {% if order.status in 'SHIPPED,DELIVERED' %}completed{% elif order.status == 'PROCESSING' %}active{% endif %}">
+            <div class="timeline-circle"><i class="bi bi-truck"></i></div>
+            <div class="timeline-title">Dispatched</div>
+            <small class="text-muted d-none d-sm-block">Express Courier</small>
+          </div>
+          <div class="timeline-step {% if order.status == 'DELIVERED' %}completed{% endif %}">
+            <div class="timeline-circle"><i class="bi bi-house-door"></i></div>
+            <div class="timeline-title">Delivered</div>
+            <small class="text-muted d-none d-sm-block">At Doorstep</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Details Summary -->
+      <div class="bg-white rounded-4 border p-4 p-md-5 shadow-sm mb-4">
+        <h4 class="fw-bold serif-font text-dark mb-4 border-bottom pb-2">Order Receipt Summary</h4>
+
+        <!-- Items Table -->
+        <div class="table-responsive mb-4">
+          <table class="table align-middle">
+            <thead class="table-light small text-muted text-uppercase">
+              <tr>
+                <th>Item Description</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Price</th>
+                <th class="text-end">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in order.items.all %}
+              <tr>
+                <td>
+                  <div class="fw-bold text-dark">{{ item.product.name }}</div>
+                  <small class="text-muted font-monospace">{{ item.product.sku }}</small>
+                </td>
+                <td class="text-center font-monospace">{{ item.quantity }}</td>
+                <td class="text-end">₹{{ item.unit_price|floatformat:2|intcomma }}</td>
+                <td class="text-end fw-bold text-dark">₹{{ item.total_price|floatformat:2|intcomma }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Financial Totals -->
+        <div class="row justify-content-end mb-4">
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded-3 border">
+              <div class="d-flex justify-content-between text-muted small mb-2">
+                <span>Subtotal:</span>
+                <span class="text-dark fw-semibold">₹{{ order.subtotal|floatformat:2|intcomma }}</span>
+              </div>
+              {% if order.discount_amount > 0 %}
+              <div class="d-flex justify-content-between text-success small mb-2">
+                <span>Discount ({{ order.coupon_code }}):</span>
+                <span>- ₹{{ order.discount_amount|floatformat:2|intcomma }}</span>
+              </div>
+              {% endif %}
+              <div class="d-flex justify-content-between text-muted small mb-2">
+                <span>Shipping:</span>
+                <span>{% if order.shipping_fee == 0 %}FREE{% else %}₹{{ order.shipping_fee|floatformat:2|intcomma }}{% endif %}</span>
+              </div>
+              <hr class="my-2">
+              <div class="d-flex justify-content-between align-items-center">
+                <span class="fw-bold fs-6 text-dark">Grand Total:</span>
+                <span class="fw-bold fs-5 text-terracotta" style="color: var(--bunai-terracotta);">₹{{ order.grand_total|floatformat:2|intcomma }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Shipping & Payment info -->
+        <div class="row g-3 border-top pt-3">
+          <div class="col-sm-6">
+            <h6 class="text-muted text-uppercase small fw-bold mb-1">Delivery Address:</h6>
+            <div class="text-dark small leading-relaxed">{{ order.shipping_address|linebreaks }}</div>
+          </div>
+          <div class="col-sm-6">
+            <h6 class="text-muted text-uppercase small fw-bold mb-1">Payment Method:</h6>
+            <div class="text-dark small">{{ order.get_payment_method_display }}</div>
+            <div class="text-muted small mt-1">Status: <span class="badge bg-success-subtle text-success">{{ order.get_payment_status_display }}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex flex-column flex-sm-row justify-content-center gap-3">
+        <a href="{% url 'track_order' %}?order_number={{ order.order_number }}&contact={{ order.customer.phone }}" class="btn btn-bunai-primary">
+          <i class="bi bi-truck me-1"></i> Track Order Status
+        </a>
+        <a href="{% url 'shop' %}" class="btn btn-outline-dark">
+          <i class="bi bi-bag"></i> Continue Shopping
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

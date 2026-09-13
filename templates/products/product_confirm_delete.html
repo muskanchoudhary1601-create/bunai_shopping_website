@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete {{ product.name }} | Bunai{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="bunai-card border-danger">
+      <div class="bunai-card-header bg-danger-subtle border-danger-subtle text-danger">
+        <h1 class="h5 mb-0 fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i> Confirm Product Deletion</h1>
+      </div>
+      <div class="bunai-card-body p-4">
+        <p class="fs-6">Are you sure you want to remove the artisan craft product <strong>"{{ product.name }}"</strong> (SKU: <code>{{ product.sku }}</code>)?</p>
+
+        {% if has_orders %}
+        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-start gap-2">
+          <i class="bi bi-info-circle-fill fs-5 text-warning flex-shrink-0"></i>
+          <div>
+            <strong>Historical Orders Detected:</strong> This product exists in past orders. To maintain financial and order ledger consistency, confirming will mark the item as <strong>Inactive</strong> rather than hard-deleting the row.
+          </div>
+        </div>
+        {% else %}
+        <div class="alert alert-secondary border-0 shadow-sm">
+          This product has no recorded orders. It will be permanently removed from the database.
+        </div>
+        {% endif %}
+
+        <form method="POST" class="d-flex justify-content-end gap-2 mt-4">
+          {% csrf_token %}
+          <a href="{% url 'product_detail' product.pk %}" class="btn btn-outline-secondary">Cancel</a>
+          <button type="submit" class="btn btn-danger">
+            <i class="bi bi-trash"></i> Confirm Delete
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

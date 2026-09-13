@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} | Bunai{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{% url 'dashboard' %}" class="text-decoration-none">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{% url 'product_list' %}" class="text-decoration-none">Products</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+  </ol>
+</nav>
+
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="bunai-card">
+      <div class="bunai-card-header">
+        <h1 class="h4 mb-0 fw-bold text-dark">{{ title }}</h1>
+        <a href="{% url 'product_list' %}" class="btn btn-sm btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Back to Products
+        </a>
+      </div>
+      <div class="bunai-card-body p-4">
+        <form method="POST" enctype="multipart/form-data" novalidate>
+          {% csrf_token %}
+
+          {% if form.errors %}
+          <div class="alert alert-danger shadow-sm border-0 mb-4">
+            <h6 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle-fill me-1"></i> Please correct the errors below:</h6>
+            <ul class="mb-0 ps-3">
+              {% for field in form %}
+                {% for error in field.errors %}
+                  <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+              {% endfor %}
+              {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
+          <div class="row g-3 mb-4">
+            <!-- Product Name -->
+            <div class="col-md-8">
+              <label for="{{ form.name.id_for_label }}" class="form-label fw-semibold">Product Name <span class="text-danger">*</span></label>
+              {{ form.name }}
+              {% if form.name.help_text %}<small class="text-muted">{{ form.name.help_text }}</small>{% endif %}
+            </div>
+
+            <!-- SKU -->
+            <div class="col-md-4">
+              <label for="{{ form.sku.id_for_label }}" class="form-label fw-semibold">SKU Code <span class="text-danger">*</span></label>
+              {{ form.sku }}
+              {% if form.sku.help_text %}<small class="text-muted">{{ form.sku.help_text }}</small>{% endif %}
+            </div>
+
+            <!-- Category -->
+            <div class="col-md-8">
+              <label for="{{ form.category.id_for_label }}" class="form-label fw-semibold">Artisan Category</label>
+              <div class="input-group">
+                {{ form.category }}
+                <a href="{% url 'category_list' %}" class="btn btn-outline-secondary" target="_blank" title="Manage categories">
+                  <i class="bi bi-plus-lg"></i>
+                </a>
+              </div>
+            </div>
+
+            <!-- Unit of Measure -->
+            <div class="col-md-4">
+              <label for="{{ form.unit.id_for_label }}" class="form-label fw-semibold">Unit of Measure</label>
+              {{ form.unit }}
+            </div>
+
+            <!-- Description -->
+            <div class="col-12">
+              <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">Description & Craft Story</label>
+              {{ form.description }}
+            </div>
+          </div>
+
+          <h5 class="fw-bold text-dark border-bottom pb-2 mb-3">Pricing & Inventory Metrics</h5>
+
+          <div class="row g-3 mb-4">
+            <!-- Cost Price -->
+            <div class="col-md-4">
+              <label for="{{ form.cost_price.id_for_label }}" class="form-label fw-semibold">Cost Price (₹)</label>
+              {{ form.cost_price }}
+              <small class="text-muted">Artisan procurement cost</small>
+            </div>
+
+            <!-- Selling Price -->
+            <div class="col-md-4">
+              <label for="{{ form.selling_price.id_for_label }}" class="form-label fw-semibold">Selling Price (₹) <span class="text-danger">*</span></label>
+              {{ form.selling_price }}
+              <small class="text-muted">Retail price charged to customer</small>
+            </div>
+
+            <!-- Live Margin Indicator -->
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Calculated Margin</label>
+              <div id="margin-calc-box" class="p-2 border rounded text-center bg-light fw-bold font-monospace">
+                0.0%
+              </div>
+              <small class="text-muted">Profit per unit: <span id="profit-calc-box">₹0.00</span></small>
+            </div>
+
+            <!-- Stock Quantity -->
+            <div class="col-md-6">
+              <label for="{{ form.stock_quantity.id_for_label }}" class="form-label fw-semibold">Stock on Hand <span class="text-danger">*</span></label>
+              {{ form.stock_quantity }}
+            </div>
+
+            <!-- Low Stock Threshold -->
+            <div class="col-md-6">
+              <label for="{{ form.low_stock_threshold.id_for_label }}" class="form-label fw-semibold">Low Stock Threshold</label>
+              {{ form.low_stock_threshold }}
+            </div>
+
+            <!-- Active Status -->
+            <div class="col-12">
+              <div class="form-check form-switch mt-2">
+                {{ form.is_active }}
+                <label class="form-check-label fw-semibold" for="{{ form.is_active.id_for_label }}">
+                  Active in Catalogue & Available for Orders
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 border-top pt-3">
+            <a href="{% url 'product_list' %}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-bunai-primary px-4">
+              <i class="bi bi-check2-circle"></i> Save Artisan Product
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const costInput = document.getElementById('id_cost_price');
+  const sellInput = document.getElementById('id_selling_price');
+  const marginBox = document.getElementById('margin-calc-box');
+  const profitBox = document.getElementById('profit-calc-box');
+
+  function updateMargin() {
+    const cost = parseFloat(costInput.value) || 0;
+    const sell = parseFloat(sellInput.value) || 0;
+    const profit = sell - cost;
+    
+    let margin = 0;
+    if (sell > 0) {
+      margin = ((sell - cost) / sell) * 100;
+    }
+
+    if (marginBox) {
+      marginBox.textContent = margin.toFixed(1) + '%';
+      if (margin >= 30) {
+        marginBox.className = 'p-2 border rounded text-center bg-success-subtle text-success fw-bold font-monospace';
+      } else if (margin > 0) {
+        marginBox.className = 'p-2 border rounded text-center bg-warning-subtle text-warning-emphasis fw-bold font-monospace';
+      } else {
+        marginBox.className = 'p-2 border rounded text-center bg-danger-subtle text-danger fw-bold font-monospace';
+      }
+    }
+
+    if (profitBox) {
+      profitBox.textContent = '₹' + profit.toFixed(2);
+    }
+  }
+
+  if (costInput && sellInput) {
+    costInput.addEventListener('input', updateMargin);
+    sellInput.addEventListener('input', updateMargin);
+    updateMargin();
+  }
+});
+</script>
+{% endblock %}

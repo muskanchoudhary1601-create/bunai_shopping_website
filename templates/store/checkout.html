@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Secure Checkout | Bunai Artisan Studio{% endblock %}
+
+{% block content %}
+<div class="container-xl py-4">
+
+  <h1 class="h2 fw-bold text-dark serif-font mb-4">Secure Checkout</h1>
+
+  <form method="POST" action="{% url 'checkout' %}" novalidate>
+    {% csrf_token %}
+
+    <div class="row g-4">
+      <!-- Left 7 Columns: Delivery & Payment Details -->
+      <div class="col-lg-7">
+        
+        <!-- Step 1: Delivery Address -->
+        <div class="bg-white rounded-3 border p-4 shadow-sm mb-4">
+          <div class="d-flex align-items-center gap-2 mb-4 pb-2 border-bottom">
+            <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px;">1</div>
+            <h5 class="fw-bold mb-0 text-dark">Customer & Shipping Information</h5>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-12">
+              <label for="{{ form.full_name.id_for_label }}" class="form-label fw-semibold small">Full Name <span class="text-danger">*</span></label>
+              {{ form.full_name }}
+              {% if form.full_name.errors %}<div class="text-danger small">{{ form.full_name.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold small">Email Address (for order tracking) <span class="text-danger">*</span></label>
+              {{ form.email }}
+              {% if form.email.errors %}<div class="text-danger small">{{ form.email.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label for="{{ form.phone.id_for_label }}" class="form-label fw-semibold small">Phone Number (for delivery updates) <span class="text-danger">*</span></label>
+              {{ form.phone }}
+              {% if form.phone.errors %}<div class="text-danger small">{{ form.phone.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="col-12">
+              <label for="{{ form.shipping_address.id_for_label }}" class="form-label fw-semibold small">Complete Street Address <span class="text-danger">*</span></label>
+              {{ form.shipping_address }}
+              {% if form.shipping_address.errors %}<div class="text-danger small">{{ form.shipping_address.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-5">
+              <label for="{{ form.city.id_for_label }}" class="form-label fw-semibold small">City <span class="text-danger">*</span></label>
+              {{ form.city }}
+              {% if form.city.errors %}<div class="text-danger small">{{ form.city.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-4">
+              <label for="{{ form.state.id_for_label }}" class="form-label fw-semibold small">State <span class="text-danger">*</span></label>
+              {{ form.state }}
+              {% if form.state.errors %}<div class="text-danger small">{{ form.state.errors.0 }}</div>{% endif %}
+            </div>
+
+            <div class="col-md-3">
+              <label for="{{ form.postal_code.id_for_label }}" class="form-label fw-semibold small">PIN Code <span class="text-danger">*</span></label>
+              {{ form.postal_code }}
+              {% if form.postal_code.errors %}<div class="text-danger small">{{ form.postal_code.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Payment Method -->
+        <div class="bg-white rounded-3 border p-4 shadow-sm mb-4">
+          <div class="d-flex align-items-center gap-2 mb-4 pb-2 border-bottom">
+            <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center fw-bold" style="width: 28px; height: 28px;">2</div>
+            <h5 class="fw-bold mb-0 text-dark">Select Payment Method</h5>
+          </div>
+
+          <div class="d-flex flex-column gap-3">
+            <label class="p-3 border rounded-3 d-flex align-items-center gap-3 cursor-pointer bg-light">
+              <input type="radio" name="payment_method" value="UPI" checked class="form-check-input mt-0">
+              <div class="flex-grow-1">
+                <div class="fw-bold text-dark"><i class="bi bi-qr-code-scan text-primary me-2"></i> UPI / Instant QR Code</div>
+                <small class="text-muted">Pay via Google Pay, PhonePe, Paytm, or BHIM</small>
+              </div>
+              <span class="badge bg-success-subtle text-success">Recommended</span>
+            </label>
+
+            <label class="p-3 border rounded-3 d-flex align-items-center gap-3 cursor-pointer">
+              <input type="radio" name="payment_method" value="COD" class="form-check-input mt-0">
+              <div class="flex-grow-1">
+                <div class="fw-bold text-dark"><i class="bi bi-cash-stack text-success me-2"></i> Cash on Delivery (COD)</div>
+                <small class="text-muted">Pay in cash when package arrives at your doorstep</small>
+              </div>
+            </label>
+
+            <label class="p-3 border rounded-3 d-flex align-items-center gap-3 cursor-pointer">
+              <input type="radio" name="payment_method" value="CARD" class="form-check-input mt-0">
+              <div class="flex-grow-1">
+                <div class="fw-bold text-dark"><i class="bi bi-credit-card text-dark me-2"></i> Credit / Debit Card</div>
+                <small class="text-muted">Visa, Mastercard, RuPay, American Express</small>
+              </div>
+            </label>
+
+            <label class="p-3 border rounded-3 d-flex align-items-center gap-3 cursor-pointer">
+              <input type="radio" name="payment_method" value="NET_BANKING" class="form-check-input mt-0">
+              <div class="flex-grow-1">
+                <div class="fw-bold text-dark"><i class="bi bi-bank text-secondary me-2"></i> Net Banking</div>
+                <small class="text-muted">All major Indian banks supported</small>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Optional Notes -->
+        <div class="bg-white rounded-3 border p-4 shadow-sm">
+          <label class="form-label fw-semibold small text-muted text-uppercase mb-2">Special Delivery Remarks / Gift Note (Optional)</label>
+          {{ form.notes }}
+        </div>
+
+      </div>
+
+      <!-- Right 5 Columns: Cart Review & Place Order CTA -->
+      <div class="col-lg-5">
+        <div class="bg-white rounded-3 border p-4 shadow-sm mb-4 sticky-top" style="top: 90px;">
+          <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom">
+            <h5 class="fw-bold mb-0 text-dark">Order Items ({{ cart.total_items }})</h5>
+            <a href="{% url 'cart_view' %}" class="small text-terracotta text-decoration-none">Edit Cart</a>
+          </div>
+
+          <!-- Items List -->
+          <div class="d-flex flex-column gap-3 mb-4 max-h-300 overflow-auto" style="max-height: 250px;">
+            {% for item in cart %}
+            <div class="d-flex justify-content-between align-items-center gap-2">
+              <div class="d-flex align-items-center gap-2">
+                <div class="rounded bg-light border p-2 text-center text-terracotta" style="width: 40px; height: 40px; flex-shrink: 0;">
+                  <i class="bi {{ item.product.category.icon|default:'bi-gem' }}"></i>
+                </div>
+                <div>
+                  <div class="fw-semibold text-dark small">{{ item.product.name|truncatewords:4 }}</div>
+                  <small class="text-muted">Qty: {{ item.quantity }} &times; ₹{{ item.price|floatformat:0|intcomma }}</small>
+                </div>
+              </div>
+              <span class="fw-bold text-dark small">₹{{ item.total_price|floatformat:0|intcomma }}</span>
+            </div>
+            {% endfor %}
+          </div>
+
+          <hr class="my-3">
+
+          <!-- Pricing Details -->
+          <div class="d-flex justify-content-between text-muted small mb-2">
+            <span>Subtotal:</span>
+            <span class="text-dark fw-semibold">₹{{ cart.get_subtotal|floatformat:2|intcomma }}</span>
+          </div>
+
+          {% if cart.get_discount > 0 %}
+          <div class="d-flex justify-content-between text-success small mb-2">
+            <span>Coupon Discount ({{ cart.coupon_code }}):</span>
+            <span>- ₹{{ cart.get_discount|floatformat:2|intcomma }}</span>
+          </div>
+          {% endif %}
+
+          <div class="d-flex justify-content-between text-muted small mb-3">
+            <span>Shipping:</span>
+            {% if cart.get_shipping_fee == 0 %}
+              <span class="text-success fw-bold">FREE</span>
+            {% else %}
+              <span class="text-dark fw-semibold">₹{{ cart.get_shipping_fee|floatformat:2|intcomma }}</span>
+            {% endif %}
+          </div>
+
+          <hr class="my-3">
+
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <span class="fw-bold fs-5 text-dark">Grand Total:</span>
+            <span class="fw-bold fs-4 text-terracotta" style="color: var(--bunai-terracotta);">₹{{ cart.get_total|floatformat:2|intcomma }}</span>
+          </div>
+
+          <div class="d-grid gap-2 mb-3">
+            <button type="submit" class="btn btn-bunai-primary btn-lg shadow">
+              <i class="bi bi-shield-check me-1"></i> Place Order Now
+            </button>
+          </div>
+
+          <div class="text-center text-muted small">
+            <i class="bi bi-lock-fill text-success me-1"></i> SSL Encrypted &bull; 100% Buyer Protection Guaranteed
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

@@ -1,0 +1,208 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Shop Handcrafted Collection | Bunai{% endblock %}
+
+{% block content %}
+<div class="container-xl py-4">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item active" aria-current="page">Shop Collection</li>
+      {% if current_category %}
+        <li class="breadcrumb-item active" aria-current="page">{{ current_category.name }}</li>
+      {% endif %}
+    </ol>
+  </nav>
+
+  <!-- Page Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4 pb-2 border-bottom">
+    <div>
+      <h1 class="h2 fw-bold text-dark serif-font mb-1">
+        {% if current_category %}{{ current_category.name }}{% elif q %}Search results for "{{ q }}"{% else %}All Artisan Crafts & Weaves{% endif %}
+      </h1>
+      <p class="text-muted mb-0">Showing {{ total_count }} handcrafted piece{% if total_count != 1 %}s{% endif %}</p>
+    </div>
+
+    <!-- Sorting Control -->
+    <div class="d-flex align-items-center gap-2">
+      <label class="text-muted small fw-semibold text-nowrap d-none d-sm-block">Sort by:</label>
+      <form method="GET" id="sort-form">
+        {% if q %}<input type="hidden" name="q" value="{{ q }}">{% endif %}
+        {% if selected_category_slug %}<input type="hidden" name="category" value="{{ selected_category_slug }}">{% endif %}
+        {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
+        {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+        {% if in_stock_only %}<input type="hidden" name="in_stock" value="1">{% endif %}
+
+        <select name="sort" class="form-select form-select-sm" onchange="document.getElementById('sort-form').submit()">
+          <option value="featured" {% if selected_sort == 'featured' %}selected{% endif %}>Featured & Bestsellers</option>
+          <option value="price_low" {% if selected_sort == 'price_low' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_high" {% if selected_sort == 'price_high' %}selected{% endif %}>Price: High to Low</option>
+          <option value="rating" {% if selected_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+          <option value="newest" {% if selected_sort == 'newest' %}selected{% endif %}>New Arrivals</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Filters Sidebar -->
+    <div class="col-lg-3">
+      <div class="p-3 p-md-4 bg-white rounded-3 border shadow-sm sticky-top" style="top: 90px;">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h5 class="fw-bold mb-0 text-dark"><i class="bi bi-funnel me-1 text-terracotta"></i> Filter Crafts</h5>
+          {% if q or selected_category_slug or min_price or max_price or in_stock_only %}
+            <a href="{% url 'shop' %}" class="small text-danger text-decoration-none">Reset All</a>
+          {% endif %}
+        </div>
+
+        <form method="GET" action="{% url 'shop' %}">
+          <!-- Search in Catalog -->
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-uppercase text-muted">Keyword Search</label>
+            <div class="input-group input-group-sm">
+              <input type="text" name="q" class="form-control" placeholder="Search craft..." value="{{ q }}">
+              <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+            </div>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-uppercase text-muted">Craft Categories</label>
+            <div class="list-group list-group-flush small">
+              <a href="{% url 'shop' %}{% if q %}?q={{ q }}{% endif %}" class="list-group-item list-group-item-action px-0 py-2 d-flex justify-content-between align-items-center {% if not selected_category_slug %}fw-bold text-terracotta{% endif %}">
+                <span>All Categories</span>
+              </a>
+              {% for cat in categories %}
+              <a href="{% url 'shop' %}?category={{ cat.slug }}{% if q %}&q={{ q }}{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}" class="list-group-item list-group-item-action px-0 py-2 d-flex justify-content-between align-items-center {% if selected_category_slug == cat.slug %}fw-bold text-terracotta{% endif %}">
+                <span>{{ cat.name }}</span>
+                <span class="badge bg-light text-secondary border rounded-pill">{{ cat.total_active }}</span>
+              </a>
+              {% endfor %}
+            </div>
+          </div>
+
+          <!-- Price Range Filter -->
+          <div class="mb-4">
+            <label class="form-label small fw-bold text-uppercase text-muted">Price Range (₹)</label>
+            <div class="row g-2 align-items-center">
+              <div class="col-6">
+                <input type="number" name="min_price" class="form-control form-control-sm" placeholder="Min ₹" value="{{ min_price }}">
+              </div>
+              <div class="col-6">
+                <input type="number" name="max_price" class="form-control form-control-sm" placeholder="Max ₹" value="{{ max_price }}">
+              </div>
+            </div>
+          </div>
+
+          <!-- In-Stock Only Checkbox -->
+          <div class="mb-4 form-check">
+            <input class="form-check-input" type="checkbox" name="in_stock" value="1" id="in_stock_check" {% if in_stock_only %}checked{% endif %}>
+            <label class="form-check-label small fw-semibold" for="in_stock_check">
+              In-Stock Items Only
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-bunai-primary w-100 btn-sm">Apply Filters</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="col-lg-9">
+      {% if page_obj %}
+      <div class="row g-4">
+        {% for product in page_obj %}
+        <div class="col-md-4 col-sm-6">
+          <div class="craft-product-card">
+            <div class="product-img-frame">
+              <i class="bi {% if product.category.icon %}{{ product.category.icon }}{% else %}bi-gem{% endif %} artisan-symbol"></i>
+              {% if product.discount_percent > 0 %}
+                <span class="badge-discount-tag">{{ product.discount_percent }}% OFF</span>
+              {% endif %}
+              {% if product.is_bestseller %}
+                <span class="badge-bestseller-tag">Bestseller</span>
+              {% endif %}
+              {% if product.is_low_stock %}
+                <span class="badge bg-warning text-dark position-absolute bottom-0 start-0 m-2 small fw-bold">Only {{ product.stock_quantity }} left!</span>
+              {% endif %}
+            </div>
+
+            <div class="product-card-content">
+              <div class="product-category-meta">{{ product.category.name|default:"Handmade Craft" }}</div>
+              <a href="{% url 'product_detail' product.slug %}" class="product-card-title">
+                {{ product.name }}
+              </a>
+
+              <div class="d-flex align-items-center gap-1 mb-2">
+                <span class="rating-stars"><i class="bi bi-star-fill"></i></span>
+                <span class="fw-bold small text-dark">{{ product.rating }}</span>
+                <span class="text-muted small">({{ product.review_count }})</span>
+              </div>
+
+              <div class="product-pricing-row">
+                <span class="selling-price">₹{{ product.selling_price|floatformat:0|intcomma }}</span>
+                {% if product.original_mrp and product.original_mrp > product.selling_price %}
+                  <span class="original-mrp">₹{{ product.original_mrp|floatformat:0|intcomma }}</span>
+                {% endif %}
+              </div>
+
+              <form method="POST" action="{% url 'cart_add' product.id %}" class="mt-auto">
+                {% csrf_token %}
+                <input type="hidden" name="quantity" value="1">
+                {% if product.is_out_of_stock %}
+                  <button type="button" class="btn btn-secondary w-100 btn-sm disabled">Out of Stock</button>
+                {% else %}
+                  <button type="submit" class="btn btn-bunai-primary w-100 btn-sm">
+                    <i class="bi bi-bag-plus"></i> Add to Cart
+                  </button>
+                {% endif %}
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Pagination Controls -->
+      {% if page_obj.has_other_pages %}
+      <div class="d-flex justify-content-center mt-5">
+        <nav aria-label="Page navigation">
+          <ul class="pagination">
+            {% if page_obj.has_previous %}
+              <li class="page-item">
+                <a class="page-link text-dark" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_category_slug %}&category={{ selected_category_slug }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock_only %}&in_stock=1{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}">&laquo;</a>
+              </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+              <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                <a class="page-link {% if page_obj.number == num %}bg-dark border-dark text-white{% else %}text-dark{% endif %}" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if selected_category_slug %}&category={{ selected_category_slug }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock_only %}&in_stock=1{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}">{{ num }}</a>
+              </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+              <li class="page-item">
+                <a class="page-link text-dark" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_category_slug %}&category={{ selected_category_slug }}{% endif %}{% if min_price %}&min_price={{ min_price }}{% endif %}{% if max_price %}&max_price={{ max_price }}{% endif %}{% if in_stock_only %}&in_stock=1{% endif %}{% if selected_sort %}&sort={{ selected_sort }}{% endif %}">&raquo;</a>
+              </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+      {% endif %}
+
+      {% else %}
+      <div class="text-center py-5 bg-white rounded-3 border">
+        <i class="bi bi-search display-3 text-muted d-block mb-3"></i>
+        <h4 class="fw-bold serif-font">No artisan crafts found</h4>
+        <p class="text-muted mb-4">Try clearing filters or searching for another craft technique.</p>
+        <a href="{% url 'shop' %}" class="btn btn-bunai-primary">Clear All Filters</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

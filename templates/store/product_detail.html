@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ product.name }} | Bunai Handmade{% endblock %}
+
+{% block content %}
+<div class="container-xl py-4">
+
+  <!-- Breadcrumb -->
+  <nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'home' %}" class="text-decoration-none">Home</a></li>
+      <li class="breadcrumb-item"><a href="{% url 'shop' %}" class="text-decoration-none">Shop</a></li>
+      {% if product.category %}
+        <li class="breadcrumb-item"><a href="{% url 'shop' %}?category={{ product.category.slug }}" class="text-decoration-none">{{ product.category.name }}</a></li>
+      {% endif %}
+      <li class="breadcrumb-item active" aria-current="page">{{ product.name|truncatewords:5 }}</li>
+    </ol>
+  </nav>
+
+  <!-- Product Main Showcase -->
+  <div class="row g-4 g-lg-5 mb-5">
+    <!-- Left Column: Product Visual Showcase -->
+    <div class="col-lg-6">
+      <div class="bg-white rounded-4 border p-4 p-md-5 text-center position-relative shadow-sm" style="min-height: 420px; background: linear-gradient(135deg, #fdf6ee 0%, #faeee0 100%);">
+        <i class="bi {% if product.category.icon %}{{ product.category.icon }}{% else %}bi-gem{% endif %} text-terracotta display-1 mb-3 d-block"></i>
+        
+        {% if product.discount_percent > 0 %}
+          <span class="badge-discount-tag fs-6 px-3 py-2">{{ product.discount_percent }}% OFF</span>
+        {% endif %}
+        {% if product.is_bestseller %}
+          <span class="badge-bestseller-tag fs-6 px-3 py-2">⭐ Master Bestseller</span>
+        {% endif %}
+
+        <div class="p-3 bg-white bg-opacity-75 rounded-3 border d-inline-block mt-4">
+          <small class="fw-bold text-dark"><i class="bi bi-patch-check-fill text-success me-1"></i> Authentic Artisan Certificate Included</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Details, Pricing & Purchase -->
+    <div class="col-lg-6">
+      <div class="mb-2">
+        <a href="{% url 'shop' %}?category={{ product.category.slug }}" class="badge bg-light text-dark border text-decoration-none text-uppercase fw-semibold">
+          {{ product.category.name|default:"Artisan Craft" }}
+        </a>
+      </div>
+
+      <h1 class="h2 fw-bold text-dark serif-font mb-2">{{ product.name }}</h1>
+
+      <!-- Rating & SKU -->
+      <div class="d-flex align-items-center gap-3 mb-3">
+        <div class="d-flex align-items-center gap-1">
+          <span class="text-warning fs-5"><i class="bi bi-star-fill"></i></span>
+          <span class="fw-bold text-dark">{{ product.rating }}</span>
+          <span class="text-muted small">({{ product.review_count }} verified reviews)</span>
+        </div>
+        <span class="text-muted">&bull;</span>
+        <span class="small font-monospace text-muted">SKU: {{ product.sku }}</span>
+      </div>
+
+      <!-- Pricing Block -->
+      <div class="p-3 bg-light rounded-3 border mb-4">
+        <div class="d-flex align-items-baseline gap-3 mb-1">
+          <span class="display-6 fw-bold text-dark">₹{{ product.selling_price|floatformat:0|intcomma }}</span>
+          {% if product.original_mrp and product.original_mrp > product.selling_price %}
+            <span class="fs-5 text-muted text-decoration-line-through">₹{{ product.original_mrp|floatformat:0|intcomma }}</span>
+            <span class="badge bg-danger fs-6">Save ₹{{ product.original_mrp|add:product.selling_price|floatformat:0 }}</span>
+          {% endif %}
+        </div>
+        <div class="small text-muted">Inclusive of all taxes &bull; <strong>Free Express Shipping</strong> on this item</div>
+      </div>
+
+      <!-- Stock Status -->
+      <div class="mb-4">
+        {% if product.is_out_of_stock %}
+          <div class="alert alert-danger d-inline-flex align-items-center gap-2 py-2 px-3 mb-0">
+            <i class="bi bi-x-circle-fill"></i> Currently Out of Stock (New batch in crafting)
+          </div>
+        {% elif product.is_low_stock %}
+          <div class="alert alert-warning d-inline-flex align-items-center gap-2 py-2 px-3 mb-0">
+            <i class="bi bi-exclamation-triangle-fill"></i> <strong>Only {{ product.stock_quantity }} {{ product.unit }}s left in stock</strong> — Order soon!
+          </div>
+        {% else %}
+          <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 fs-6">
+            <i class="bi bi-check-circle-fill me-1"></i> In Stock & Ready to Dispatch
+          </span>
+        {% endif %}
+      </div>
+
+      <!-- Add to Cart & Buy Now Form -->
+      {% if not product.is_out_of_stock %}
+      <form method="POST" action="{% url 'cart_add' product.id %}" class="mb-4">
+        {% csrf_token %}
+        <div class="row g-2 align-items-center mb-3">
+          <div class="col-sm-4 col-5">
+            <label class="form-label small fw-bold text-muted text-uppercase mb-1">Quantity</label>
+            <div class="input-group">
+              <button class="btn btn-outline-secondary" type="button" onclick="const input = document.getElementById('qty-input'); if(input.value > 1) input.value--;">-</button>
+              <input type="number" id="qty-input" name="quantity" class="form-control text-center fw-bold" value="1" min="1" max="{{ product.stock_quantity }}">
+              <button class="btn btn-outline-secondary" type="button" onclick="const input = document.getElementById('qty-input'); if(input.value < {{ product.stock_quantity }}) input.value++;">+</button>
+            </div>
+          </div>
+          <div class="col-sm-8 col-7">
+            <label class="form-label small d-none d-sm-block mb-1">&nbsp;</label>
+            <button type="submit" class="btn btn-bunai-primary w-100 btn-lg shadow">
+              <i class="bi bi-bag-plus"></i> Add to Cart
+            </button>
+          </div>
+        </div>
+      </form>
+      {% endif %}
+
+      <!-- Trust Guarantees -->
+      <div class="border-top pt-3">
+        <div class="row g-2 text-muted small">
+          <div class="col-6"><i class="bi bi-patch-check text-success me-1"></i> 100% Master Handmade</div>
+          <div class="col-6"><i class="bi bi-arrow-repeat text-primary me-1"></i> 7-Day Easy Exchange</div>
+          <div class="col-6"><i class="bi bi-box2 text-secondary me-1"></i> Zero Plastic Packaging</div>
+          <div class="col-6"><i class="bi bi-shield-lock text-dark me-1"></i> Secure UPI / Card Checkout</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Specifications & Story Tabs -->
+  <div class="row g-4 mb-5">
+    <div class="col-lg-8">
+      <div class="bg-white rounded-3 border p-4 shadow-sm mb-4">
+        <h3 class="h4 fw-bold serif-font text-dark mb-3">The Artisan Craft Story</h3>
+        <p class="text-dark leading-relaxed mb-4">
+          {{ product.description|linebreaks }}
+        </p>
+
+        <h4 class="h5 fw-bold serif-font text-dark border-top pt-3 mb-3">Specifications & Heritage</h4>
+        <table class="table table-sm table-borderless align-middle mb-0">
+          <tbody>
+            <tr>
+              <th class="text-muted fw-semibold" style="width: 180px;">Origin & Guild:</th>
+              <td class="text-dark">{{ product.material_origin }}</td>
+            </tr>
+            <tr>
+              <th class="text-muted fw-semibold">Craft Technique:</th>
+              <td class="text-dark">{{ product.craft_technique }}</td>
+            </tr>
+            <tr>
+              <th class="text-muted fw-semibold">Unit:</th>
+              <td class="text-dark">{{ product.unit|title }}</td>
+            </tr>
+            <tr>
+              <th class="text-muted fw-semibold">Care Instructions:</th>
+              <td class="text-dark">Gentle hand care with mild organic cleanser. Keep away from harsh direct sunlight.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Verified Reviews Section -->
+      <div class="bg-white rounded-3 border p-4 shadow-sm">
+        <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+          <div>
+            <h3 class="h4 fw-bold serif-font text-dark mb-0">Customer Reviews ({{ reviews|length }})</h3>
+            <div class="text-warning small mt-1">
+              <i class="bi bi-star-fill"></i> {{ product.rating }} out of 5 stars
+            </div>
+          </div>
+          <button class="btn btn-outline-dark btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#reviewCollapse">
+            <i class="bi bi-pencil me-1"></i> Write a Review
+          </button>
+        </div>
+
+        <!-- Write Review Collapse Form -->
+        <div class="collapse mb-4" id="reviewCollapse">
+          <div class="p-3 bg-light rounded-3 border mb-3">
+            <h5 class="fw-bold mb-3">Share Your Craft Experience</h5>
+            <form method="POST" action="{% url 'add_review' product.slug %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Your Name</label>
+                {{ review_form.author_name }}
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Rating</label>
+                {{ review_form.rating }}
+              </div>
+              <div class="mb-3">
+                <label class="form-label small fw-bold">Your Review</label>
+                {{ review_form.comment }}
+              </div>
+              <button type="submit" class="btn btn-bunai-primary btn-sm">Submit Review</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Reviews List -->
+        <div class="d-flex flex-column gap-3">
+          {% for r in reviews %}
+          <div class="border-bottom pb-3">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+              <div class="fw-bold text-dark">{{ r.author_name }} <span class="badge bg-success-subtle text-success small fw-normal ms-1"><i class="bi bi-check-circle"></i> Verified Buyer</span></div>
+              <div class="text-warning small">
+                {% for _ in "x"|rjust:r.rating %}<i class="bi bi-star-fill"></i>{% endfor %}
+              </div>
+            </div>
+            <p class="text-dark small mb-1">{{ r.comment }}</p>
+            <div class="text-muted" style="font-size: 0.75rem;">{{ r.created_at|date:"d M Y" }}</div>
+          </div>
+          {% empty %}
+          <p class="text-muted mb-0">No reviews yet for this piece. Be the first to share your thoughts!</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Related Products Sidebar -->
+    <div class="col-lg-4">
+      <div class="bg-white rounded-3 border p-4 shadow-sm">
+        <h4 class="h5 fw-bold serif-font text-dark mb-3">You May Also Cherish</h4>
+        <div class="d-flex flex-column gap-3">
+          {% for rel in related_products %}
+          <a href="{% url 'product_detail' rel.slug %}" class="d-flex gap-3 text-decoration-none text-dark border-bottom pb-3">
+            <div class="rounded-3 bg-light border p-3 text-center text-terracotta d-flex align-items-center justify-content-center" style="width: 65px; height: 65px; flex-shrink: 0;">
+              <i class="bi {{ rel.category.icon|default:'bi-gem' }} fs-4"></i>
+            </div>
+            <div>
+              <h6 class="fw-semibold mb-1 text-dark">{{ rel.name|truncatewords:4 }}</h6>
+              <div class="fw-bold text-terracotta">₹{{ rel.selling_price|floatformat:0|intcomma }}</div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

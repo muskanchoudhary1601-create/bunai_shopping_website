@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Bunai | Curated Handmade Crafts, Sarees & Home Decor{% endblock %}
+
+{% block content %}
+<div class="container-xl py-4">
+
+  <!-- Hero Section -->
+  <section class="store-hero-banner mb-5">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-7">
+        <div class="hero-pill-badge mb-3">
+          <i class="bi bi-stars text-warning"></i> Authentic Indian Handcrafts
+        </div>
+        <h1 class="display-4 fw-bold text-dark serif-font mb-3" style="line-height: 1.15;">
+          Where Heritage Weaves Meet Contemporary Living.
+        </h1>
+        <p class="lead text-muted mb-4" style="max-width: 540px;">
+          Discover handloom Chanderi sarees, natural macrame tapestries, hand-thrown studio pottery, and intricate needlecraft — ethically sourced direct from master artisan clusters.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{% url 'shop' %}" class="btn btn-bunai-primary btn-lg shadow">
+            <i class="bi bi-bag-check"></i> Explore Collections
+          </a>
+          <a href="{% url 'our_story' %}" class="btn btn-outline-dark btn-lg">
+            Our Artisan Heritage
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5 text-center d-none d-lg-block">
+        <div class="p-4 bg-white rounded-4 shadow border position-relative" style="transform: rotate(2deg);">
+          <div class="rounded-3 p-5 text-center text-terracotta" style="background: linear-gradient(135deg, #fceddc 0%, #ebd7c0 100%);">
+            <i class="bi bi-gem display-1 text-terracotta mb-3 d-block"></i>
+            <h3 class="serif-font fw-bold text-dark mb-1">Handcrafted with Soul</h3>
+            <p class="small text-muted mb-0">Every thread, knot, and glaze tells a timeless story.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Value Props / Trust Badges -->
+  <section class="mb-5">
+    <div class="row g-3">
+      <div class="col-md-3 col-sm-6">
+        <div class="trust-badge-item">
+          <div class="trust-badge-icon"><i class="bi bi-fingerprint"></i></div>
+          <div>
+            <h6 class="fw-bold mb-0">100% Handcrafted</h6>
+            <small class="text-muted">No machine replicas</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="trust-badge-item">
+          <div class="trust-badge-icon"><i class="bi bi-people"></i></div>
+          <div>
+            <h6 class="fw-bold mb-0">Direct Artisan Pay</h6>
+            <small class="text-muted">Fair trade wages</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="trust-badge-item">
+          <div class="trust-badge-icon"><i class="bi bi-truck"></i></div>
+          <div>
+            <h6 class="fw-bold mb-0">Free Shipping</h6>
+            <small class="text-muted">On orders above ₹1,999</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-sm-6">
+        <div class="trust-badge-item">
+          <div class="trust-badge-icon"><i class="bi bi-box-seam"></i></div>
+          <div>
+            <h6 class="fw-bold mb-0">Zero Plastic</h6>
+            <small class="text-muted">Eco-friendly packaging</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Curated Craft Categories -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <span class="text-terracotta text-uppercase fw-bold small tracking-wide">Curated Heritage</span>
+        <h2 class="h2 fw-bold serif-font mb-0">Shop by Craft Technique</h2>
+      </div>
+      <a href="{% url 'shop' %}" class="btn btn-bunai-outline btn-sm">All Crafts &rarr;</a>
+    </div>
+
+    <div class="row g-3">
+      {% for cat in categories %}
+      <div class="col-lg-2 col-md-4 col-6">
+        <a href="{% url 'shop' %}?category={{ cat.slug }}" class="category-card">
+          <div class="category-icon-bubble">
+            <i class="bi {{ cat.icon }}"></i>
+          </div>
+          <h6 class="fw-bold mb-1">{{ cat.name }}</h6>
+          <small class="text-muted">{{ cat.product_count }} items</small>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Best-Selling Crafts Section -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <span class="badge bg-warning text-dark px-3 py-1 fw-bold mb-2">⭐ Trending Favorites</span>
+        <h2 class="h2 fw-bold serif-font mb-0">Artisan Bestsellers</h2>
+      </div>
+      <a href="{% url 'shop' %}" class="text-decoration-none fw-semibold text-terracotta">View Catalog &rarr;</a>
+    </div>
+
+    <div class="row g-4">
+      {% for product in bestseller_products %}
+      <div class="col-lg-3 col-md-6">
+        <div class="craft-product-card">
+          <!-- Image Frame -->
+          <div class="product-img-frame">
+            <i class="bi {% if product.category.icon %}{{ product.category.icon }}{% else %}bi-gem{% endif %} artisan-symbol"></i>
+            {% if product.discount_percent > 0 %}
+              <span class="badge-discount-tag">{{ product.discount_percent }}% OFF</span>
+            {% endif %}
+            <span class="badge-bestseller-tag">Bestseller</span>
+          </div>
+
+          <!-- Content -->
+          <div class="product-card-content">
+            <div class="product-category-meta">{{ product.category.name|default:"Handmade Craft" }}</div>
+            <a href="{% url 'product_detail' product.slug %}" class="product-card-title">
+              {{ product.name }}
+            </a>
+
+            <!-- Rating -->
+            <div class="d-flex align-items-center gap-1 mb-2">
+              <span class="rating-stars">
+                <i class="bi bi-star-fill"></i>
+              </span>
+              <span class="fw-bold small text-dark">{{ product.rating }}</span>
+              <span class="text-muted small">({{ product.review_count }})</span>
+            </div>
+
+            <!-- Price & Add to Cart Form -->
+            <div class="product-pricing-row">
+              <span class="selling-price">₹{{ product.selling_price|floatformat:0|intcomma }}</span>
+              {% if product.original_mrp and product.original_mrp > product.selling_price %}
+                <span class="original-mrp">₹{{ product.original_mrp|floatformat:0|intcomma }}</span>
+              {% endif %}
+            </div>
+
+            <form method="POST" action="{% url 'cart_add' product.id %}" class="mt-auto">
+              {% csrf_token %}
+              <input type="hidden" name="quantity" value="1">
+              {% if product.is_out_of_stock %}
+                <button type="button" class="btn btn-secondary w-100 btn-sm disabled">Out of Stock</button>
+              {% else %}
+                <button type="submit" class="btn btn-bunai-primary w-100 btn-sm">
+                  <i class="bi bi-bag-plus"></i> Add to Cart
+                </button>
+              {% endif %}
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Artisan Craft Banner / Story Highlight -->
+  <section class="mb-5 p-4 p-md-5 rounded-4 text-white" style="background: linear-gradient(135deg, #25201e 0%, #3d2f28 100%);">
+    <div class="row align-items-center g-4">
+      <div class="col-lg-8">
+        <span class="text-warning text-uppercase fw-bold small">Ethical Craft Movement</span>
+        <h2 class="display-6 fw-bold serif-font text-white mt-1 mb-3">Empowering 400+ Traditional Indian Craft Families</h2>
+        <p class="text-secondary leading-relaxed mb-4" style="max-width: 650px;">
+          When you purchase from Bunai, 100% of the proceeds directly support generational pit-loom weavers in Chanderi, clay potters in Khurja, and Kashmiri needlework artisans. No middlemen, no compromise on craft authenticity.
+        </p>
+        <a href="{% url 'our_story' %}" class="btn btn-bunai-primary">Read the Artisan Story &rarr;</a>
+      </div>
+      <div class="col-lg-4 text-center">
+        <div class="p-4 rounded-3 border border-secondary bg-dark bg-opacity-50">
+          <h3 class="text-warning serif-font display-4 fw-bold mb-0">100%</h3>
+          <div class="text-white fw-semibold mb-2">Authentic Provenance</div>
+          <small class="text-secondary">Certified handloom and handmade craft guarantees with every order.</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Collection Grid -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <span class="text-terracotta text-uppercase fw-bold small tracking-wide">New Season Drop</span>
+        <h2 class="h2 fw-bold serif-font mb-0">Featured Artisan Pieces</h2>
+      </div>
+      <a href="{% url 'shop' %}" class="btn btn-bunai-outline btn-sm">Shop All &rarr;</a>
+    </div>
+
+    <div class="row g-4">
+      {% for product in featured_products %}
+      <div class="col-lg-3 col-md-6">
+        <div class="craft-product-card">
+          <div class="product-img-frame">
+            <i class="bi {% if product.category.icon %}{{ product.category.icon }}{% else %}bi-gem{% endif %} artisan-symbol"></i>
+            {% if product.discount_percent > 0 %}
+              <span class="badge-discount-tag">{{ product.discount_percent }}% OFF</span>
+            {% endif %}
+            {% if product.is_low_stock %}
+              <span class="badge bg-warning text-dark position-absolute bottom-0 start-0 m-2 small fw-bold">Only {{ product.stock_quantity }} Left!</span>
+            {% endif %}
+          </div>
+
+          <div class="product-card-content">
+            <div class="product-category-meta">{{ product.category.name|default:"Handmade Craft" }}</div>
+            <a href="{% url 'product_detail' product.slug %}" class="product-card-title">
+              {{ product.name }}
+            </a>
+
+            <div class="d-flex align-items-center gap-1 mb-2">
+              <span class="rating-stars"><i class="bi bi-star-fill"></i></span>
+              <span class="fw-bold small text-dark">{{ product.rating }}</span>
+              <span class="text-muted small">({{ product.review_count }})</span>
+            </div>
+
+            <div class="product-pricing-row">
+              <span class="selling-price">₹{{ product.selling_price|floatformat:0|intcomma }}</span>
+              {% if product.original_mrp and product.original_mrp > product.selling_price %}
+                <span class="original-mrp">₹{{ product.original_mrp|floatformat:0|intcomma }}</span>
+              {% endif %}
+            </div>
+
+            <form method="POST" action="{% url 'cart_add' product.id %}" class="mt-auto">
+              {% csrf_token %}
+              <input type="hidden" name="quantity" value="1">
+              {% if product.is_out_of_stock %}
+                <button type="button" class="btn btn-secondary w-100 btn-sm disabled">Out of Stock</button>
+              {% else %}
+                <button type="submit" class="btn btn-bunai-primary w-100 btn-sm">
+                  <i class="bi bi-bag-plus"></i> Add to Cart
+                </button>
+              {% endif %}
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Customer Love & Reviews -->
+  <section class="mb-5">
+    <div class="text-center mb-4">
+      <span class="text-terracotta text-uppercase fw-bold small">Verified Buyers</span>
+      <h2 class="h2 fw-bold serif-font">Loved by Craft Connoisseurs</h2>
+    </div>
+
+    <div class="row g-3">
+      {% for review in latest_reviews %}
+      <div class="col-md-4">
+        <div class="p-4 bg-white rounded-3 border h-100 shadow-sm d-flex flex-direction-column">
+          <div class="d-flex align-items-center gap-1 text-warning mb-2">
+            <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
+          </div>
+          <p class="text-dark small leading-relaxed italic mb-3">
+            "{{ review.comment }}"
+          </p>
+          <div class="mt-auto border-top pt-2">
+            <div class="fw-bold text-dark small">{{ review.author_name }}</div>
+            <div class="text-muted" style="font-size: 0.75rem;">Verified Buyer &bull; {{ review.product.name|truncatewords:4 }}</div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+</div>
+{% endblock %}

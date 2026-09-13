@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Our Artisan Heritage & Craft Story | Bunai{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  
+  <div class="row justify-content-center mb-5">
+    <div class="col-lg-8 text-center">
+      <span class="text-terracotta text-uppercase fw-bold small tracking-wide">The Soul of Bunai</span>
+      <h1 class="display-4 fw-bold serif-font text-dark mb-3">Honoring Generations of Indian Craftsmanship</h1>
+      <p class="lead text-muted">
+        In Hindi, <em>"Bunai" (बुनाई)</em> means the sacred art of weaving, knotting, and interlacing threads of craft tradition. We bridge ancient artisan heritage with modern ethical homes.
+      </p>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-5">
+    <div class="col-md-4">
+      <div class="p-4 bg-white rounded-4 border h-100 shadow-sm">
+        <div class="category-icon-bubble mb-3"><i class="bi bi-heart"></i></div>
+        <h4 class="fw-bold serif-font mb-2">Direct Artisan Patronage</h4>
+        <p class="text-muted small leading-relaxed mb-0">
+          Every rupee spent on Bunai directly compensates our artisan families, ensuring fair living wages, healthcare stipends, and dignified continuity of heritage craft techniques.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="p-4 bg-white rounded-4 border h-100 shadow-sm">
+        <div class="category-icon-bubble mb-3"><i class="bi bi-flower1"></i></div>
+        <h4 class="fw-bold serif-font mb-2">Organic & Sustainable</h4>
+        <p class="text-muted small leading-relaxed mb-0">
+          We use only unbleached raw cotton, natural vegetable indigo dyes, ethically gathered Himachal merino wool, and natural river clay. Completely free of microplastics.
+        </p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <div class="p-4 bg-white rounded-4 border h-100 shadow-sm">
+        <div class="category-icon-bubble mb-3"><i class="bi bi-box2"></i></div>
+        <h4 class="fw-bold serif-font mb-2">Zero Plastic Philosophy</h4>
+        <p class="text-muted small leading-relaxed mb-0">
+          All our shipments are carefully wrapped in handmade seed paper, recycled corrugated boxes, and natural jute ties that return safely to the earth.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Big Call to Action -->
+  <div class="p-5 rounded-4 text-center text-white" style="background: linear-gradient(135deg, #c25e38 0%, #9a4321 100%);">
+    <h2 class="display-6 fw-bold serif-font mb-3">Bring Handmade Soul into Your Home</h2>
+    <p class="lead text-white-50 mb-4" style="max-width: 600px; margin: 0 auto;">
+      Explore our seasonal drops of handwoven Chanderi sarees, macrame decor, ceramic mugs, and needlecraft.
+    </p>
+    <a href="{% url 'shop' %}" class="btn btn-light btn-lg px-5 py-3 fw-bold text-dark shadow">
+      Explore All Artisan Collections &rarr;
+    </a>
+  </div>
+
+</div>
+{% endblock %}

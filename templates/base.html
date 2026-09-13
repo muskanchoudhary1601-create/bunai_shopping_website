@@ -1,0 +1,211 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Bunai | Authentic Handmade Indian Crafts & Weaves{% endblock %}</title>
+  
+  <!-- Bootstrap 5.3 CSS & Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  
+  <!-- Custom Bunai Theme CSS -->
+  <link rel="stylesheet" href="{% static 'css/bunai.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="announcement-bar text-center">
+    <div class="container-xl">
+      <span>✨ Festive Artisanal Sale: Enjoy <strong>Free All-India Express Delivery</strong> on orders over ₹1,999! Use code <strong class="text-warning">BUNAI10</strong> for 10% off.</span>
+    </div>
+  </div>
+
+  <!-- Main Storefront Navbar -->
+  <nav class="navbar navbar-expand-lg bunai-navbar">
+    <div class="container-xl d-flex align-items-center justify-content-between">
+      <!-- Brand Logo -->
+      <a class="navbar-brand d-inline-flex align-items-center gap-2 m-0 p-0" href="{% url 'home' %}">
+        <div class="brand-icon-box">
+          <i class="bi bi-gem"></i>
+        </div>
+        <div class="d-flex flex-column justify-content-center">
+          <span class="brand-title">Bunai</span>
+          <span class="craft-tag">Artisan Studio</span>
+        </div>
+      </a>
+
+      <!-- Mobile Right Utility (Cart & Toggler) -->
+      <div class="d-flex align-items-center gap-2 d-lg-none">
+        <a href="{% url 'cart_view' %}" class="mobile-cart-btn" title="View Cart">
+          <i class="bi bi-bag fs-5"></i>
+          {% if cart.total_items > 0 %}
+            <span class="mobile-cart-badge">{{ cart.total_items }}</span>
+          {% endif %}
+        </a>
+        <button class="navbar-toggler p-2 border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarStore" aria-controls="navbarStore" aria-expanded="false" aria-label="Toggle navigation">
+          <i class="bi bi-list fs-2 text-dark"></i>
+        </button>
+      </div>
+
+      <!-- Desktop & Expanded Nav Container -->
+      <div class="collapse navbar-collapse justify-content-between align-items-center" id="navbarStore">
+        <!-- Navigation Links -->
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0 align-items-lg-center gap-lg-1 pt-3 pt-lg-0">
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
+              Home
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'shop' and not request.GET.category %}active{% endif %}" href="{% url 'shop' %}">
+              Shop All
+            </a>
+          </li>
+          <!-- Categories Dropdown -->
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle d-flex align-items-center gap-1 {% if request.GET.category %}active{% endif %}" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Craft Categories
+            </a>
+            <ul class="dropdown-menu shadow border-0 py-2 mt-2">
+              {% for cat in global_categories %}
+                <li>
+                  <a class="dropdown-item py-2 d-flex align-items-center gap-2" href="{% url 'shop' %}?category={{ cat.slug }}">
+                    <i class="bi {{ cat.icon }} text-terracotta"></i>
+                    <span>{{ cat.name }}</span>
+                  </a>
+                </li>
+              {% endfor %}
+              <li><hr class="dropdown-divider my-1"></li>
+              <li><a class="dropdown-item py-2 fw-semibold text-terracotta" href="{% url 'shop' %}">View All Crafts &rarr;</a></li>
+            </ul>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'our_story' %}active{% endif %}" href="{% url 'our_story' %}">
+              Our Story
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'track_order' %}active{% endif %}" href="{% url 'track_order' %}">
+              Track Order
+            </a>
+          </li>
+        </ul>
+
+        <!-- Right Side: Search Box & Cart Button -->
+        <div class="d-flex flex-column flex-lg-row align-items-stretch align-items-lg-center gap-2 gap-lg-3 pb-3 pb-lg-0">
+          <!-- Search Box -->
+          <form method="GET" action="{% url 'shop' %}" class="search-form-header m-0">
+            <div class="search-input-group">
+              <i class="bi bi-search search-icon text-muted"></i>
+              <input type="text" name="q" class="search-input" placeholder="Search crafts, sarees..." value="{{ request.GET.q }}">
+            </div>
+          </form>
+
+          <!-- Shopping Cart Pill (Desktop) -->
+          <a href="{% url 'cart_view' %}" class="cart-pill-button d-none d-lg-inline-flex" title="Shopping Cart">
+            <div class="d-flex align-items-center gap-2">
+              <i class="bi bi-bag fs-6"></i>
+              <span>Bag</span>
+            </div>
+            <span class="cart-count-badge">{{ cart.total_items }}</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Flash Messages / Toast Alerts -->
+  <div class="container-xl mt-3">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'info' %}info{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2" role="alert">
+          <i class="bi {% if message.tags == 'success' %}bi-check-circle-fill text-success{% elif message.tags == 'error' %}bi-exclamation-triangle-fill text-danger{% else %}bi-info-circle-fill text-primary{% endif %} fs-5"></i>
+          <div>{{ message }}</div>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- Main Content Body -->
+  <main class="flex-grow-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Storefront Footer -->
+  <footer class="bunai-store-footer">
+    <div class="container-xl">
+      <div class="row g-4">
+        <!-- Brand Story Column -->
+        <div class="col-lg-4 col-md-6">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <h4 class="h3 fw-bold mb-0 text-white serif-font">Bunai</h4>
+            <span class="craft-tag" style="background: rgba(255,255,255,0.15); color: #fff;">Artisan Studio</span>
+          </div>
+          <p class="text-secondary small leading-relaxed mb-3">
+            Bunai celebrates centuries-old Indian handcrafted heritage. We work directly with master weaver clusters, potters, and needlecraft artisans to bring authentic luxury home decor and textiles to your doorstep.
+          </p>
+          <div class="d-flex gap-3 text-white fs-5">
+            <a href="#" class="text-secondary" title="Instagram"><i class="bi bi-instagram"></i></a>
+            <a href="#" class="text-secondary" title="Pinterest"><i class="bi bi-pinterest"></i></a>
+            <a href="#" class="text-secondary" title="Facebook"><i class="bi bi-facebook"></i></a>
+            <a href="#" class="text-secondary" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>
+          </div>
+        </div>
+
+        <!-- Quick Links -->
+        <div class="col-lg-2 col-md-6 col-6">
+          <h5 class="h6 text-uppercase fw-bold text-white mb-3">Shop Collections</h5>
+          <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+            {% for cat in global_categories|slice:":5" %}
+              <li><a href="{% url 'shop' %}?category={{ cat.slug }}">{{ cat.name }}</a></li>
+            {% endfor %}
+            <li><a href="{% url 'shop' %}" class="fw-semibold text-warning">All Products &rarr;</a></li>
+          </ul>
+        </div>
+
+        <!-- Customer Care -->
+        <div class="col-lg-2 col-md-6 col-6">
+          <h5 class="h6 text-uppercase fw-bold text-white mb-3">Customer Care</h5>
+          <ul class="list-unstyled small d-flex flex-column gap-2 mb-0">
+            <li><a href="{% url 'track_order' %}">Track Your Order</a></li>
+            <li><a href="{% url 'cart_view' %}">View Shopping Cart</a></li>
+            <li><a href="{% url 'our_story' %}">Artisan Heritage</a></li>
+            <li><a href="mailto:support@bunaiartisan.in">support@bunaiartisan.in</a></li>
+            <li><a href="/admin/" target="_blank" class="text-muted">Staff Admin Portal</a></li>
+          </ul>
+        </div>
+
+        <!-- Newsletter & Promises -->
+        <div class="col-lg-4 col-md-6">
+          <h5 class="h6 text-uppercase fw-bold text-white mb-3">Join the Artisan Guild</h5>
+          <p class="small text-secondary mb-3">Subscribe to receive private craft exhibition invites, seasonal handloom drops, and 10% off your next purchase.</p>
+          <form onsubmit="event.preventDefault(); alert('Thank you for subscribing to Bunai stories!');" class="input-group mb-3">
+            <input type="email" class="form-control form-control-sm bg-dark text-white border-secondary" placeholder="Enter your email..." required>
+            <button class="btn btn-bunai-primary btn-sm" type="submit">Join</button>
+          </form>
+          <div class="small text-secondary">
+            <i class="bi bi-shield-check text-success me-1"></i> 100% Handcrafted &bull; Direct Artisan Pay &bull; Zero Plastic
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Bar -->
+      <div class="footer-bottom d-flex flex-column flex-md-row justify-content-between align-items-center gap-2">
+        <div>&copy; 2026 Bunai Artisan Studio. Handcrafted with love in India.</div>
+        <div class="d-flex gap-3">
+          <span class="text-secondary"><i class="bi bi-lock me-1"></i> 256-bit Secure Checkout</span>
+          <span class="text-secondary"><i class="bi bi-cash-stack me-1"></i> UPI & COD Accepted</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5.3 Bundle JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

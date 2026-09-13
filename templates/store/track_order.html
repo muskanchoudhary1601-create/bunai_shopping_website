@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Track Your Order | Bunai Artisan Goods{% endblock %}
+
+{% block content %}
+<div class="container-xl py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="text-center mb-4">
+        <span class="text-terracotta text-uppercase fw-bold small">Live Fulfillment Tracking</span>
+        <h1 class="h2 fw-bold serif-font text-dark mb-2">Track Your Artisan Order</h1>
+        <p class="text-muted" style="max-width: 500px; margin: 0 auto;">
+          Enter your Order Tracking Number and your phone or email to view live updates from our craft guilds.
+        </p>
+      </div>
+
+      <!-- Tracking Search Box -->
+      <div class="bg-white rounded-4 border p-4 shadow-sm mb-4">
+        <form method="POST" action="{% url 'track_order' %}" class="row g-3 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-6">
+            <label class="form-label small fw-bold text-muted">Order Number</label>
+            <input type="text" name="order_number" class="form-control form-control-lg font-monospace text-uppercase" placeholder="e.g. BN-202609-AB12" value="{{ order_number_query }}" required>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label small fw-bold text-muted">Phone Number or Email</label>
+            <div class="input-group input-group-lg">
+              <input type="text" name="contact_info" class="form-control" placeholder="Phone or Email on order" value="{{ contact_info_query }}">
+              <button class="btn btn-bunai-primary" type="submit">Track</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Order Result Box -->
+      {% if order %}
+      <div class="bg-white rounded-4 border p-4 p-md-5 shadow-sm mb-4">
+        <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-4 pb-3 border-bottom">
+          <div>
+            <h4 class="fw-bold font-monospace text-dark mb-1">Order #{{ order.order_number }}</h4>
+            <div class="small text-muted">Placed on {{ order.order_date|date:"d M Y, H:i" }} &bull; Customer: <strong>{{ order.customer.name }}</strong></div>
+          </div>
+          <span class="badge bg-{{ order.status|lower }}-subtle text-dark border px-3 py-2 fs-6">
+            Status: {{ order.get_status_display }}
+          </span>
+        </div>
+
+        <!-- Live Visual Stepper -->
+        <div class="timeline-stepper text-start my-4 px-2">
+          <div class="timeline-step {% if order.status != 'CANCELLED' %}completed{% endif %}">
+            <div class="timeline-circle"><i class="bi bi-check-lg"></i></div>
+            <div class="timeline-title">Order Placed</div>
+            <small class="text-muted d-none d-sm-block">{{ order.order_date|date:"d M" }}</small>
+          </div>
+          <div class="timeline-step {% if order.status in 'PROCESSING,SHIPPED,DELIVERED' %}completed{% elif order.status == 'PENDING' %}active{% endif %}">
+            <div class="timeline-circle"><i class="bi bi-scissors"></i></div>
+            <div class="timeline-title">In Crafting</div>
+            <small class="text-muted d-none d-sm-block">Artisan Studio</small>
+          </div>
+          <div class="timeline-step {% if order.status in 'SHIPPED,DELIVERED' %}completed{% elif order.status == 'PROCESSING' %}active{% endif %}">
+            <div class="timeline-circle"><i class="bi bi-truck"></i></div>
+            <div class="timeline-title">Dispatched</div>
+            <small class="text-muted d-none d-sm-block">In Transit</small>
+          </div>
+          <div class="timeline-step {% if order.status == 'DELIVERED' %}completed{% endif %}">
+            <div class="timeline-circle"><i class="bi bi-house-door"></i></div>
+            <div class="timeline-title">Delivered</div>
+            <small class="text-muted d-none d-sm-block">At Doorstep</small>
+          </div>
+        </div>
+
+        <!-- Order Items Breakdown -->
+        <h6 class="fw-bold text-muted text-uppercase small mb-3">Items in this Package</h6>
+        <div class="list-group list-group-flush mb-4">
+          {% for item in order.items.all %}
+          <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+              <div class="rounded bg-light border p-2 text-terracotta text-center" style="width: 44px; height: 44px;">
+                <i class="bi {{ item.product.category.icon|default:'bi-gem' }} fs-5"></i>
+              </div>
+              <div>
+                <a href="{% url 'product_detail' item.product.slug %}" class="fw-bold text-dark text-decoration-none">
+                  {{ item.product.name }}
+                </a>
+                <div class="small text-muted font-monospace">Qty: {{ item.quantity }} &times; ₹{{ item.unit_price|floatformat:0|intcomma }}</div>
+              </div>
+            </div>
+            <span class="fw-bold text-dark">₹{{ item.total_price|floatformat:0|intcomma }}</span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Delivery & Payment Info -->
+        <div class="row g-3 p-3 bg-light rounded-3 border">
+          <div class="col-sm-6">
+            <label class="text-muted small text-uppercase fw-bold mb-1">Destination Address:</label>
+            <div class="small text-dark">{{ order.shipping_address|linebreaks }}</div>
+          </div>
+          <div class="col-sm-6">
+            <label class="text-muted small text-uppercase fw-bold mb-1">Payment & Total:</label>
+            <div class="small text-dark mb-1">{{ order.get_payment_method_display }} &bull; <span class="badge bg-success-subtle text-success">{{ order.get_payment_status_display }}</span></div>
+            <div class="fw-bold text-terracotta fs-5">₹{{ order.grand_total|floatformat:2|intcomma }}</div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+{% endblock %}

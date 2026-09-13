@@ -1,0 +1,414 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Dashboard | Bunai Artisan Inventory & Orders{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h2 mb-1 fw-bold text-dark">Business Overview & Dashboard</h1>
+    <p class="text-muted mb-0">Track real-time inventory levels, artisan order flows, and revenue metrics.</p>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <a href="{% url 'order_create' %}" class="btn btn-bunai-primary">
+      <i class="bi bi-plus-lg"></i> New Order
+    </a>
+    <a href="{% url 'product_create' %}" class="btn btn-outline-secondary">
+      <i class="bi bi-box-seam"></i> Add Product
+    </a>
+  </div>
+</div>
+
+<!-- KPI Cards Row -->
+<div class="row g-3 mb-4">
+  <!-- Total Revenue -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="kpi-card kpi-terracotta h-100">
+      <div class="kpi-icon-wrapper">
+        <i class="bi bi-currency-rupee"></i>
+      </div>
+      <div class="kpi-value">₹{{ total_revenue|floatformat:2|intcomma }}</div>
+      <div class="kpi-label">Total Realized Revenue</div>
+      <div class="mt-2 small text-muted">
+        <i class="bi bi-check2-circle text-success me-1"></i> Across {{ completed_orders_count }} completed orders
+      </div>
+    </div>
+  </div>
+
+  <!-- Total Orders -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="kpi-card kpi-navy h-100">
+      <div class="kpi-icon-wrapper">
+        <i class="bi bi-bag-check"></i>
+      </div>
+      <div class="kpi-value">{{ total_orders }}</div>
+      <div class="kpi-label">Total Orders Placed</div>
+      <div class="mt-2 small text-muted">
+        <span class="badge bg-warning text-dark me-1">{{ pending_orders_count }} Active</span>
+        <span class="badge bg-success">{{ completed_orders_count }} Delivered</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Products -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="kpi-card kpi-sage h-100">
+      <div class="kpi-icon-wrapper">
+        <i class="bi bi-box-seam"></i>
+      </div>
+      <div class="kpi-value">{{ total_products }}</div>
+      <div class="kpi-label">Active Artisan Products</div>
+      <div class="mt-2 small text-muted">
+        {% if low_stock_count > 0 or out_of_stock_count > 0 %}
+          <span class="text-danger fw-semibold">
+            <i class="bi bi-exclamation-triangle-fill"></i> {{ low_stock_count|add:out_of_stock_count }} stock alert{% if low_stock_count|add:out_of_stock_count > 1 %}s{% endif %}
+          </span>
+        {% else %}
+          <span class="text-success"><i class="bi bi-shield-check"></i> All inventory healthy</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Customers Count -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="kpi-card kpi-amber h-100">
+      <div class="kpi-icon-wrapper">
+        <i class="bi bi-people"></i>
+      </div>
+      <div class="kpi-value">{{ total_customers }}</div>
+      <div class="kpi-label">Registered Customers</div>
+      <div class="mt-2 small text-muted">
+        <a href="{% url 'customer_create' %}" class="text-decoration-none text-muted">
+          <i class="bi bi-person-plus me-1"></i> Add new customer
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Low Stock Alert Banner (if any) -->
+{% if low_stock_items %}
+<div class="bunai-card mb-4 border-warning bg-light">
+  <div class="bunai-card-header bg-warning-subtle text-dark border-warning-subtle">
+    <div class="d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill text-warning fs-5"></i>
+      <h3 class="h6 mb-0 fw-bold">Inventory Low Stock Warnings ({{ low_stock_items|length }} items need attention)</h3>
+    </div>
+    <a href="{% url 'product_list' %}?stock=low_stock" class="btn btn-sm btn-outline-dark">View All Low Stock</a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bunai table-sm align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Product / SKU</th>
+          <th>Category</th>
+          <th>Available Stock</th>
+          <th>Alert Threshold</th>
+          <th>Quick Restock</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for prod in low_stock_items %}
+        <tr>
+          <td>
+            <a href="{% url 'product_detail' prod.pk %}" class="fw-semibold text-decoration-none text-dark">
+              {{ prod.name }}
+            </a>
+            <div class="small text-muted font-monospace">{{ prod.sku }}</div>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border">{{ prod.category.name|default:"Uncategorized" }}</span>
+          </td>
+          <td>
+            <span class="badge bg-{{ prod.stock_badge_class }} fs-6">
+              {{ prod.stock_quantity }} {{ prod.unit }}
+            </span>
+          </td>
+          <td class="text-muted small">&le; {{ prod.low_stock_threshold }} {{ prod.unit }}</td>
+          <td>
+            <form method="POST" action="{% url 'product_quick_stock' prod.pk %}" class="d-inline-flex align-items-center gap-1">
+              {% csrf_token %}
+              <input type="hidden" name="adjustment" value="10">
+              <input type="hidden" name="next" value="{% url 'dashboard' %}">
+              <button type="submit" class="btn btn-sm btn-outline-success" title="Add 10 units to stock">
+                <i class="bi bi-plus-lg"></i> +10 Units
+              </button>
+            </form>
+            <a href="{% url 'product_update' prod.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Charts Section -->
+<div class="row g-4 mb-4">
+  <!-- Revenue & Orders Trend -->
+  <div class="col-lg-8">
+    <div class="bunai-card h-100">
+      <div class="bunai-card-header">
+        <div>
+          <h2 class="h5 mb-0 fw-bold">Revenue & Order Volume Trend</h2>
+          <small class="text-muted">Monthly performance over the last 6 months</small>
+        </div>
+      </div>
+      <div class="bunai-card-body">
+        <canvas id="revenueTrendChart" height="240"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Order Status Distribution -->
+  <div class="col-lg-4">
+    <div class="bunai-card h-100">
+      <div class="bunai-card-header">
+        <div>
+          <h2 class="h5 mb-0 fw-bold">Order Status Breakdown</h2>
+          <small class="text-muted">Current fulfillment pipeline</small>
+        </div>
+      </div>
+      <div class="bunai-card-body d-flex flex-column align-items-center justify-content-center">
+        <div style="max-width: 250px; width: 100%;">
+          <canvas id="orderStatusChart" height="220"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Lower Section: Recent Orders & Top Selling Products -->
+<div class="row g-4">
+  <!-- Recent Orders Table -->
+  <div class="col-lg-8">
+    <div class="bunai-card">
+      <div class="bunai-card-header">
+        <div>
+          <h2 class="h5 mb-0 fw-bold">Recent Artisan Orders</h2>
+          <small class="text-muted">Latest customer purchase orders</small>
+        </div>
+        <div class="d-flex gap-2">
+          <a href="{% url 'order_list' %}" class="btn btn-sm btn-outline-secondary">View All Orders</a>
+          <a href="{% url 'order_create' %}" class="btn btn-sm btn-bunai-primary"><i class="bi bi-plus"></i> New</a>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-bunai align-middle">
+          <thead>
+            <tr>
+              <th>Order #</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Items</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in recent_orders %}
+            <tr>
+              <td>
+                <a href="{% url 'order_detail' order.pk %}" class="fw-bold text-decoration-none text-dark">
+                  #{{ order.order_number }}
+                </a>
+              </td>
+              <td>
+                <div class="fw-semibold">{{ order.customer.name }}</div>
+                <div class="small text-muted">{{ order.customer.city|default:"" }}</div>
+              </td>
+              <td class="text-muted small">
+                {{ order.order_date|date:"d M, Y" }}
+              </td>
+              <td>
+                <span class="badge bg-light text-dark border">{{ order.items.count }} item{% if order.items.count > 1 %}s{% endif %}</span>
+              </td>
+              <td class="fw-bold">
+                ₹{{ order.grand_total|floatformat:2|intcomma }}
+              </td>
+              <td>
+                <span class="badge badge-bunai badge-{{ order.status|lower }}">
+                  {{ order.get_status_display }}
+                </span>
+              </td>
+              <td>
+                <div class="btn-group btn-group-sm">
+                  <a href="{% url 'order_detail' order.pk %}" class="btn btn-outline-secondary" title="View Details">
+                    <i class="bi bi-eye"></i>
+                  </a>
+                  <a href="{% url 'order_invoice' order.pk %}" class="btn btn-outline-secondary" title="Invoice" target="_blank">
+                    <i class="bi bi-printer"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center py-4 text-muted">
+                <i class="bi bi-receipt fs-3 d-block mb-2"></i>
+                No orders recorded yet. Click <strong>New Order</strong> to create one!
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Selling Products -->
+  <div class="col-lg-4">
+    <div class="bunai-card">
+      <div class="bunai-card-header">
+        <div>
+          <h2 class="h5 mb-0 fw-bold">Top Selling Crafts</h2>
+          <small class="text-muted">Best performers by volume</small>
+        </div>
+        <a href="{% url 'product_list' %}" class="btn btn-sm btn-outline-secondary">Catalogue</a>
+      </div>
+      <div class="bunai-card-body p-0">
+        <div class="list-group list-group-flush">
+          {% for item in top_selling_items %}
+          <div class="list-group-item p-3 d-flex align-items-center justify-content-between">
+            <div class="me-3">
+              <a href="{% url 'product_detail' item.product__id %}" class="fw-semibold text-decoration-none text-dark d-block">
+                {{ item.product__name }}
+              </a>
+              <small class="text-muted font-monospace">{{ item.product__sku }}</small>
+            </div>
+            <div class="text-end">
+              <span class="badge bg-success-subtle text-success border border-success-subtle fw-bold fs-6">
+                {{ item.total_sold }} sold
+              </span>
+              <div class="small text-muted mt-1">₹{{ item.total_revenue|floatformat:2|intcomma }}</div>
+            </div>
+          </div>
+          {% empty %}
+          <div class="p-4 text-center text-muted">
+            No sales data recorded yet.
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  // Chart 1: Revenue Trend
+  const ctxRevenue = document.getElementById('revenueTrendChart');
+  if (ctxRevenue) {
+    const monthLabels = {{ chart_month_labels|safe }};
+    const revenues = {{ chart_monthly_revenues|safe }};
+    const ordersCount = {{ chart_monthly_orders|safe }};
+
+    new Chart(ctxRevenue, {
+      type: 'bar',
+      data: {
+        labels: monthLabels,
+        datasets: [
+          {
+            label: 'Revenue (₹)',
+            data: revenues,
+            backgroundColor: 'rgba(194, 94, 56, 0.8)',
+            borderColor: '#c25e38',
+            borderWidth: 1,
+            borderRadius: 6,
+            yAxisID: 'y',
+          },
+          {
+            label: 'Orders Count',
+            data: ordersCount,
+            type: 'line',
+            borderColor: '#25201d',
+            backgroundColor: 'rgba(37, 32, 29, 0.1)',
+            tension: 0.3,
+            fill: false,
+            yAxisID: 'y1',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: function (context) {
+                if (context.dataset.yAxisID === 'y') {
+                  return ' Revenue: ₹' + Number(context.raw).toLocaleString('en-IN');
+                }
+                return ' Orders: ' + context.raw;
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            type: 'linear',
+            position: 'left',
+            ticks: {
+              callback: function (val) {
+                return '₹' + Number(val).toLocaleString('en-IN');
+              }
+            },
+            grid: { color: 'rgba(0,0,0,0.05)' }
+          },
+          y1: {
+            type: 'linear',
+            position: 'right',
+            grid: { drawOnChartArea: false },
+            ticks: { stepSize: 1 }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // Chart 2: Order Status Doughnut
+  const ctxStatus = document.getElementById('orderStatusChart');
+  if (ctxStatus) {
+    const statusLabels = {{ chart_status_labels|safe }};
+    const statusCounts = {{ chart_status_counts|safe }};
+
+    new Chart(ctxStatus, {
+      type: 'doughnut',
+      data: {
+        labels: statusLabels,
+        datasets: [{
+          data: statusCounts,
+          backgroundColor: [
+            '#d97706', // Pending (amber)
+            '#2563eb', // Processing (blue)
+            '#0284c7', // Shipped (cyan)
+            '#16a34a', // Delivered (green)
+            '#dc2626', // Cancelled (red)
+          ],
+          borderWidth: 2,
+          borderColor: '#ffffff',
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12 } }
+        },
+        cutout: '65%'
+      }
+    });
+  }
+});
+</script>
+{% endblock %}
